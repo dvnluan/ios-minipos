@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import KeychainSwift
 
 class AuthManager: ObservableObject {
     static let shared = AuthManager()
@@ -8,12 +9,15 @@ class AuthManager: ObservableObject {
     @Published var token: String?
     @Published var userId: Int?
     
+    private let keychain = KeychainSwift()
     private let tokenKey = "jwt_token"
     private let userIdKey = "user_id"
     
     private init() {
-        self.token = UserDefaults.standard.string(forKey: tokenKey)
-        self.userId = UserDefaults.standard.integer(forKey: userIdKey)
+        self.token = keychain.get(tokenKey)
+        if let userIdString = keychain.get(userIdKey) {
+            self.userId = Int(userIdString)
+        }
         self.isLoggedIn = self.token != nil
     }
     
@@ -22,8 +26,12 @@ class AuthManager: ObservableObject {
         self.userId = userId
         self.isLoggedIn = true
         
-        UserDefaults.standard.set(token, forKey: tokenKey)
-        UserDefaults.standard.set(userId, forKey: userIdKey)
+        keychain.set(token, forKey: tokenKey)
+        keychain.set(String(userId), forKey: userIdKey)
+        
+        // Clear legacy UserDefaults if they exist
+        UserDefaults.standard.removeObject(forKey: tokenKey)
+        UserDefaults.standard.removeObject(forKey: userIdKey)
     }
     
     func logout() {
@@ -31,7 +39,7 @@ class AuthManager: ObservableObject {
         self.userId = nil
         self.isLoggedIn = false
         
-        UserDefaults.standard.removeObject(forKey: tokenKey)
-        UserDefaults.standard.removeObject(forKey: userIdKey)
+        keychain.delete(tokenKey)
+        keychain.delete(userIdKey)
     }
 }

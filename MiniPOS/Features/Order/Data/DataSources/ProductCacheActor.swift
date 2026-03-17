@@ -3,14 +3,14 @@ import Foundation
 actor ProductCacheActor {
     static let shared = ProductCacheActor()
     
+    private init() {}
+    
     private var products: [Product] = []
     private var categories: [Category] = []
     private var lastUpdated: Date?
     
-    // Cache expiration time (e.g., 5 minutes)
-    private let cacheDuration: TimeInterval = 300
-    
-    private init() {}
+    // Cache expiration time
+    private let cacheDuration: TimeInterval = 300 // 5min
     
     func getProducts() -> [Product]? {
         if isCacheValid() {
